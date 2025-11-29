@@ -8,27 +8,26 @@ import matplotlib.pyplot as plt
 import copy
 import random
 
-# ==========================================
-# 1. Configuration & Hyperparameters (UPDATED)
-# ==========================================
-NUM_CLIENTS = 100         # تم التعديل لـ 100 عميل
-CLIENTS_PER_ROUND = 10    # تم التعديل لـ 10 عملاء في الجولة (C=0.1)
-TOTAL_ROUNDS = 30         # زودنا الجولات شوية عشان العدد زاد
-LOCAL_EPOCHS = 3          # عدد مرات التدريب المحلي
+# Configuration & Hyperparameters (UPDATED)
+
+NUM_CLIENTS = 100         
+CLIENTS_PER_ROUND = 10    
+TOTAL_ROUNDS = 30         
+LOCAL_EPOCHS = 3          
 BATCH_SIZE = 32
 LEARNING_RATE = 0.01
 
 # ARA-Fed Specific Parameters
-ALPHA = 0.5               # Balancing parameter for Scheduling
-BETA = 1.0                # Decay rate for Adaptive Aggregation
+ALPHA = 0.5               
+BETA = 1.0                
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
 
-# ==========================================
-# 2. Dataset Preparation (Non-IID Simulation)
-# ==========================================
+
+# Dataset Preparation (Non-IID Simulation)
+
 def get_dataset():
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
     train_dataset = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform)
@@ -36,17 +35,17 @@ def get_dataset():
     return train_dataset, test_dataset
 
 def split_non_iid(dataset, num_clients):
-    # تقسيم البيانات بشكل غير متوازن (Non-IID)
+    
     data_len = len(dataset)
     indices = np.arange(data_len)
     labels = dataset.targets.numpy()
     
-    # ترتيب البيانات حسب الـ Labels عشان كل عميل ياخد أرقام معينة بس
+    
     idxs_labels = np.vstack((indices, labels))
     idxs_labels = idxs_labels[:, idxs_labels[1, :].argsort()]
     idxs = idxs_labels[0, :]
 
-    # تقسيم البيانات لـ 100 جزء
+    
     shards = np.array_split(idxs, num_clients)
     client_dict = {i: shards[i] for i in range(num_clients)}
     return client_dict
@@ -59,9 +58,9 @@ client_data_indices = split_non_iid(train_data, NUM_CLIENTS)
 client_bandwidths = np.random.uniform(1, 100, NUM_CLIENTS)
 max_bandwidth = 100.0
 
-# ==========================================
-# 3. Model Definition (Simple CNN)
-# ==========================================
+
+# Model Definition (Simple CNN)
+
 class SimpleCNN(nn.Module):
     def __init__(self):
         super(SimpleCNN, self).__init__()
@@ -76,9 +75,9 @@ class SimpleCNN(nn.Module):
         x = self.fc2(x)
         return x
 
-# ==========================================
-# 4. Helper Functions
-# ==========================================
+
+# Helper Functions
+
 def client_update(client_model, optimizer, train_loader, epochs):
     client_model.train()
     total_loss = 0.0
@@ -106,11 +105,12 @@ def evaluate(model, test_loader):
             correct += (predicted == target).sum().item()
     return 100 * correct / total
 
-# ==========================================
-# 5. FEDERATED LEARNING ALGORITHMS
-# ==========================================
 
-# --- A. Standard FedAvg (Baseline) ---
+# FEDERATED LEARNING ALGORITHMS
+
+
+# Standard FedAvg (Baseline) 
+
 def run_fedavg():
     print(f"\n--- Running Standard FedAvg (Clients={NUM_CLIENTS}) ---")
     global_model = SimpleCNN().to(device)
@@ -120,7 +120,7 @@ def run_fedavg():
         global_weights = global_model.state_dict()
         local_updates = []
         
-        # اختيار عشوائي لـ 10 عملاء
+        
         selected_clients = np.random.choice(range(NUM_CLIENTS), CLIENTS_PER_ROUND, replace=False)
         
         for client_id in selected_clients:
@@ -134,7 +134,7 @@ def run_fedavg():
             w_i, _ = client_update(local_model, optimizer, loader, LOCAL_EPOCHS)
             local_updates.append({'weights': w_i, 'size': len(idxs)})
             
-        # تجميع تقليدي (Average)
+        
         total_samples = sum([u['size'] for u in local_updates])
         new_weights = copy.deepcopy(local_updates[0]['weights'])
         
@@ -154,7 +154,7 @@ def run_fedavg():
         
     return acc_history
 
-# --- B. Proposed ARA-Fed (Ours) ---
+# Proposed ARA-Fed (Ours) 
 def run_arafed():
     print(f"\n--- Running ARA-Fed (Clients={NUM_CLIENTS}) ---")
     global_model = SimpleCNN().to(device)
@@ -166,16 +166,16 @@ def run_arafed():
         global_weights = global_model.state_dict()
         local_updates = []
         
-        # 1. Strategic Scheduling
+        # Strategic Scheduling
         client_scores = []
         for i in range(NUM_CLIENTS):
             data_size = len(client_data_indices[i])
             bw = client_bandwidths[i]
-            # معادلة الـ Utility
+           
             u_score = ALPHA * (bw / max_bandwidth) + (1 - ALPHA) * (data_size / total_data_size)
             client_scores.append(u_score)
             
-        # اختيار أعلى 10 عملاء (Top-10)
+        
         selected_clients = np.argsort(client_scores)[-CLIENTS_PER_ROUND:]
         
         for client_id in selected_clients:
@@ -189,10 +189,10 @@ def run_arafed():
             w_i, loss_i = client_update(local_model, optimizer, loader, LOCAL_EPOCHS)
             local_updates.append({'weights': w_i, 'size': len(idxs), 'loss': loss_i})
             
-        # 2. Loss-Adaptive Aggregation
+        # Loss-Adaptive Aggregation
         scaling_factors = []
         for update in local_updates:
-            # معادلة الـ Adaptive Weighting
+            
             psi = np.exp(-BETA * update['loss'])
             scaling_factors.append(psi)
             
@@ -214,9 +214,9 @@ def run_arafed():
         
     return acc_history
 
-# ==========================================
-# 6. Execution & Plotting
-# ==========================================
+
+# Execution & Plotting
+
 history_fedavg = run_fedavg()
 history_arafed = run_arafed()
 
@@ -232,7 +232,8 @@ plt.grid(True)
 plt.savefig('arafed_100_clients.png')
 plt.show()
 
-# Print Final Summary
+
 print("\n--- Final Results ---")
 print(f"FedAvg Final Accuracy: {history_fedavg[-1]:.2f}%")
+
 print(f"ARA-Fed Final Accuracy: {history_arafed[-1]:.2f}%")
