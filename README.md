@@ -12,9 +12,6 @@ This repository contains the official PyTorch implementation of the paper:
 => Key Results
 The simulation demonstrates that ARA-Fed achieves **~12.9% higher accuracy** and **faster convergence** compared to standard FedAvg on the MNIST Non-IID benchmark ($N=100$ clients).
 
-![Performance Comparison](arafed_100_clients.png)
-(Note: Ensure you upload the results image 'arafed_100_clients.png' to the repo for this to display)*
-
 ---
 
 => Prerequisites
