@@ -1,10 +1,10 @@
 # ARA-Fed: Adaptive Resource-Aware Federated Learning Framework 
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c.svg)
 ![Status](https://img.shields.io/badge/Status-Research_Validated-success.svg)
+![Domain](https://img.shields.io/badge/Domain-Multi_Modal_AI-orange.svg)
 
-This repository contains the official **PyTorch implementation** and simulation environment for the research paper:
+This repository contains the official simulation environment for the research paper:
 
 > **"Federated Learning for Privacy-Preserving AI: An Optimized Client-Server Aggregation Protocol"**
 
@@ -14,21 +14,20 @@ This repository contains the official **PyTorch implementation** and simulation 
 
 ## Key Features
 
-* **Multi-Modal Evaluation:** Validated across **Computer Vision** (MNIST, CIFAR-10), **NLP** (AG News, IMDB), and **Audio** (SpeechCommands, UrbanSound8K).
+* **Multi-Modal Evaluation:** Validated across 3 domains:
+    * **Computer Vision:** MNIST, CIFAR-10
+    * **NLP:** AG News, IMDB
+    * **Audio:** SpeechCommands, UrbanSound8K
 * **Comprehensive Benchmarking:** Compared against **5 State-of-the-Art Baselines**:
-    * FedAvg (Google)
-    * FedProx (Heterogeneity-aware)
-    * SCAFFOLD (Control Variates)
-    * FedNova (Normalized Averaging)
-    * MOON (Contrastive Learning)
+    * FedAvg, FedProx, SCAFFOLD, FedNova, MOON
 * **Non-IID Robustness:** Tested under strict Dirichlet partitioning ($Dir(\alpha)=0.5$).
-* **Scalability:** Simulated on a network of **100 Clients** with heterogeneous bandwidths.
+* **Scalability:** Simulated on a network of **100 Clients**.
 
 ---
 
 ## Performance Highlights
 
-ARA-Fed consistently outperforms state-of-the-art baselines across all modalities, achieving up to **17.8% higher accuracy** in resource-constrained settings.
+ARA-Fed consistently outperforms baselines across all modalities:
 
 ### 1. Computer Vision (CV)
 | Algorithm | MNIST (Accuracy) | CIFAR-10 (Accuracy) |
@@ -53,7 +52,7 @@ ARA-Fed consistently outperforms state-of-the-art baselines across all modalitie
 
 ---
 
-## Installation
+## 🛠️ Installation & Usage
 
 1.  **Clone the repository:**
     ```bash
@@ -63,17 +62,40 @@ ARA-Fed consistently outperforms state-of-the-art baselines across all modalitie
 
 2.  **Install dependencies:**
     ```bash
-    pip install torch torchvision torchtext torchaudio matplotlib numpy
+    pip install numpy matplotlib
     ```
+
+3.  **Run Simulations:**
+
+    * **For Computer Vision (MNIST / CIFAR-10):**
+        ```bash
+        python vision_simulation.py
+        ```
+        *(Note: Edit the file to toggle between `MNIST` and `CIFAR10`)*
+
+    * **For NLP (AG News / IMDB):**
+        ```bash
+        python text_simulation.py
+        ```
+
+    * **For Audio (Speech / UrbanSound):**
+        ```bash
+        python audio_simulation.py
+        ```
 
 ---
 
-## How to Run
+## Acknowledgment
+We would like to thank **Ms. ALZahraa Sherif** for her valuable technical assistance and contribution to the implementation of the multi-modal simulation experiments.
 
-The simulation is modular. You can select the target domain (Vision, Text, or Audio) by modifying the configuration in the script.
+---
 
-### Scenario A: Computer Vision
-To run the simulation on **MNIST** or **CIFAR-10**:
-```bash
-# Open vision_simulation.py and set DATASET_NAME = 'CIFAR10'
-python vision_simulation.py
+## Citation
+If you use this code, please cite our paper:
+```bibtex
+@article{arafed2024,
+  title={Federated Learning for Privacy-Preserving AI: An Optimized Client-Server Aggregation Protocol},
+  author={Atia, Youssef and Sherif, ALZahraa et al.},
+  journal={Submitted to Q1 Journal},
+  year={2024}
+}
